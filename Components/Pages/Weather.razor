@@ -1,0 +1,89 @@
+﻿@page "/weather"
+
+<PageTitle>Weather</PageTitle>
+
+<h1>Weather</h1>
+
+<p>This component demonstrates showing data.</p>
+
+@if (forecasts == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div style="margin-bottom:20px; border: 1px dotted var(--accent-fill-rest)">
+        Selected Forcast:
+        <ul>
+            <li>Id: @selectedForecast?.Id</li>
+            <li>Date: @selectedForecast?.Date</li>
+            <li></li>
+            <li>Same forcast clicked again: @sameForacst</li>
+            <li>PreviousId: @previousSelectedId</li>
+            <li>selectedId: @selectedId</li>
+        </ul>
+    </div>
+    
+
+
+    <FluentDataGrid Id="weathergrid2" Items="@forecasts"
+                    ResizableColumns=false
+                    GridTemplateColumns="1fr 1fr 1fr 1fr 2fr"
+                    TGridItem="WeatherForecast"
+                    OnRowFocus="HandleRowFocus">
+        <PropertyColumn Title="Id" Property="@(c => c!.Id)" Sortable="true" Align="Align.Start" />
+        <PropertyColumn Title="Date" Property="@(c => c!.Date)" Sortable="true" Align="Align.Start" />
+        <PropertyColumn Title="Temp. (C)" Property="@(c => c!.TemperatureC)" Sortable="true" Align="Align.Center" />
+        <PropertyColumn Title="Temp. (F)" Property="@(c => c!.TemperatureF)" Sortable="true" Align="Align.Center" />
+        <PropertyColumn Title="Summary" Property="@(c => c!.Summary)" Sortable="true" Align="Align.End" />
+    </FluentDataGrid>
+}
+
+@code {
+    private IQueryable<WeatherForecast>? forecasts;
+
+    private WeatherForecast? selectedForecast;
+    private int? selectedId;
+    private int? previousSelectedId;
+    private bool sameForacst;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Simulate asynchronous loading to demonstrate a loading indicator
+        await Task.Delay(500);
+
+        var startDate = DateOnly.FromDateTime(DateTime.Now);
+        var summaries = new[] { "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching" };
+
+        forecasts = Enumerable.Range(1, 10).Select(index => new WeatherForecast
+            {
+                Id = index,
+                Date = startDate.AddDays(index),
+                TemperatureC = Random.Shared.Next(-20, 55),
+                Summary = summaries[Random.Shared.Next(summaries.Length)]
+            }).AsQueryable();
+    }
+
+    private void HandleRowFocus(FluentDataGridRow<WeatherForecast> row)
+    {
+        Console.WriteLine($"\r\nrowFocus {row?.Item?.Id}");
+
+        previousSelectedId = selectedId;
+
+        if (row?.Item != null)
+        {
+            selectedId = row.Item.Id;
+            selectedForecast = forecasts?.Where(t => t.Id == selectedId).FirstOrDefault();
+        }
+        sameForacst = previousSelectedId == row?.Item?.Id;
+    }
+
+    private class WeatherForecast
+    {
+        public int Id;
+        public DateOnly Date { get; set; }
+        public int TemperatureC { get; set; }
+        public string? Summary { get; set; }
+        public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+    }
+}
